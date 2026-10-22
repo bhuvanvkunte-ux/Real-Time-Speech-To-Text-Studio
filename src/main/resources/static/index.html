@@ -86,6 +86,16 @@
         <canvas id="waveCanvas"></canvas>
       </div>
 
+      <!-- Output Script Selector -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted);"><i class="fas fa-keyboard"></i> Output Text Writing:</span>
+        <select id="scriptModeSelect" class="form-control" style="width:auto;padding:8px 16px;background:rgba(0,0,0,0.5);border:1px solid var(--border-glass-bright);border-radius:var(--radius-full);font-size:13px;color:#fff;">
+          <option value="en-IN" selected>🔤 English Writing Text (Hinglish / Latin Script)</option>
+          <option value="en-US">🇺🇸 English Writing Text (Global en-US)</option>
+          <option value="hi-translit">🇮🇳 Hindi Voice → English Writing Transliteration</option>
+        </select>
+      </div>
+
       <!-- Live Recording Controls -->
       <div class="controls-bar">
         <button id="recordBtn" class="btn-record" title="Click to start/stop speaking">
@@ -105,6 +115,9 @@
         </button>
         <button id="ttsBtn" class="btn btn-secondary">
           <i class="fas fa-volume-up"></i> Listen (TTS)
+        </button>
+        <button id="translateBtn" class="btn btn-secondary" title="Translate Hindi/Hinglish to English">
+          <i class="fas fa-language"></i> Translate to English
         </button>
         <button id="refineBtn" class="btn btn-secondary" title="Punctuate and format with AI">
           <i class="fas fa-magic"></i> Refine
@@ -296,6 +309,6 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Client JavaScript -->
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=2"></script>
 </body>
 </html>

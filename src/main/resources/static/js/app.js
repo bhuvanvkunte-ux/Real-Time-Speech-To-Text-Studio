@@ -37,6 +37,8 @@ const elements = {
   clearBtn: document.getElementById('clearBtn'),
   copyBtn: document.getElementById('copyBtn'),
   ttsBtn: document.getElementById('ttsBtn'),
+  translateBtn: document.getElementById('translateBtn'),
+  scriptModeSelect: document.getElementById('scriptModeSelect'),
   refineBtn: document.getElementById('refineBtn'),
   waveCanvas: document.getElementById('waveCanvas'),
   liveOutput: document.getElementById('liveOutput'),
@@ -138,6 +140,137 @@ function sendWsInterim(text, duration) {
 }
 
 // ==========================================
+// DEVANAGARI HINDI TO ENGLISH WRITING TRANSLITERATOR
+// ==========================================
+function toEnglishScript(text) {
+  if (!text) return '';
+
+  let res = text;
+
+  // 1. Common English and Hindi words commonly transcribed in Devanagari
+  const wordMap = {
+    'हेलो': 'Hello',
+    'हेल्लो': 'Hello',
+    'माय': 'my',
+    'नेम': 'name',
+    'इस': 'is',
+    'भुवन': 'Bhuvan',
+    'मेरा': 'mera',
+    'मेरी': 'meri',
+    'मेरे': 'mere',
+    'नाम': 'naam',
+    'है': 'hai',
+    'हैं': 'hain',
+    'हो': 'ho',
+    'था': 'tha',
+    'थी': 'thi',
+    'थे': 'the',
+    'अच्छी': 'acchi',
+    'अच्छा': 'accha',
+    'बात': 'baat',
+    'बुरी': 'buri',
+    'बुरा': 'bura',
+    'नहीं': 'nahi',
+    'और': 'aur',
+    'क्या': 'kya',
+    'कहा': 'kaha',
+    'कहो': 'kaho',
+    'करो': 'karo',
+    'करना': 'karna',
+    'करेंगे': 'karenge',
+    'करूंगा': 'karunga',
+    'करती': 'karti',
+    'करता': 'karta',
+    'आप': 'aap',
+    'आपका': 'aapka',
+    'तुम': 'tum',
+    'तुम्हारा': 'tumhara',
+    'हम': 'hum',
+    'हमारा': 'humara',
+    'दिखाओ': 'dikhao',
+    'बताओ': 'batao',
+    'सुनो': 'suno',
+    'नमस्ते': 'namaste',
+    'धन्यवाद': 'dhanyavad',
+    'शुक्रिया': 'shukriya',
+    'ठीक': 'theek',
+    'कल': 'kal',
+    'आज': 'aaj',
+    'अभी': 'abhi',
+    'काम': 'kaam',
+    'कॉल': 'call',
+    'मीटिंग': 'meeting',
+    'प्रोजेक्ट': 'project',
+    'कोड': 'code',
+    'टाइम': 'time',
+    'वर्क': 'work',
+    'थैंक': 'thank',
+    'थैंक्यू': 'thank you',
+    'प्लीज': 'please',
+    'ओके': 'okay',
+    'यस': 'yes',
+    'नो': 'no',
+    'सर': 'sir',
+    'मैम': 'maam'
+  };
+
+  for (const [hindi, eng] of Object.entries(wordMap)) {
+    const reg = new RegExp('\\b' + hindi + '\\b', 'gi');
+    res = res.replace(reg, eng);
+  }
+
+  // If already pure English / Latin alphabet, return
+  if (!/[\u0900-\u097F]/.test(res)) {
+    return res;
+  }
+
+  // 2. Character-by-character phonetic transliteration
+  const vowels = {
+    'अ': 'a', 'आ': 'aa', 'इ': 'i', 'ई': 'ee', 'उ': 'u', 'ऊ': 'oo', 'ऋ': 'ri',
+    'ए': 'e', 'ऐ': 'ai', 'ओ': 'o', 'औ': 'au', 'ं': 'n', 'ँ': 'n', 'ः': 'h'
+  };
+
+  const matras = {
+    'ा': 'a', 'ि': 'i', 'ी': 'ee', 'ु': 'u', 'ू': 'oo', 'ृ': 'ri',
+    'े': 'e', 'ै': 'ai', 'ो': 'o', 'ौ': 'au'
+  };
+
+  const consonants = {
+    'क': 'k', 'ख': 'kh', 'ग': 'g', 'घ': 'gh', 'ङ': 'ng',
+    'च': 'ch', 'छ': 'chh', 'ज': 'j', 'झ': 'jh', 'ञ': 'ny',
+    'ट': 't', 'ठ': 'th', 'ड': 'd', 'ढ': 'dh', 'ण': 'n',
+    'त': 't', 'थ': 'th', 'द': 'd', 'ध': 'dh', 'न': 'n',
+    'प': 'p', 'फ': 'ph', 'ब': 'b', 'भ': 'bh', 'म': 'm',
+    'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'v', 'श': 'sh', 'ष': 'sh', 'स': 's', 'ह': 'h',
+    'क़': 'q', 'ख़': 'kh', 'ग़': 'gh', 'ज़': 'z', 'ड़': 'r', 'ढ़': 'rh', 'फ़': 'f'
+  };
+
+  let out = '';
+  const len = res.length;
+  for (let i = 0; i < len; i++) {
+    const c = res[i];
+
+    if (vowels[c]) {
+      out += vowels[c];
+    } else if (matras[c]) {
+      out += matras[c];
+    } else if (c === '्') {
+      continue;
+    } else if (consonants[c]) {
+      out += consonants[c];
+      const next = (i + 1 < len) ? res[i + 1] : '';
+      if (!matras[next] && next !== '्' && next !== ' ' && next !== '' && /[\u0900-\u097F]/.test(next)) {
+        out += 'a';
+      }
+    } else {
+      out += c;
+    }
+  }
+
+  return out;
+}
+
+// ==========================================
 // SPEECH RECOGNITION (MULTILINGUAL HINGLISH)
 // ==========================================
 function initSpeechRecognition() {
@@ -152,8 +285,9 @@ function initSpeechRecognition() {
   state.recognition.continuous = true;
   state.recognition.interimResults = true;
   state.recognition.maxAlternatives = 1;
-  // hi-IN natively transcribes both Hindi and Hinglish/English phonetics accurately
-  state.recognition.lang = 'hi-IN';
+  // en-IN outputs English writing letters for both English and Hindi/Hinglish speech
+  state.recognition.lang = elements.scriptModeSelect ? elements.scriptModeSelect.value : 'en-IN';
+  if (state.recognition.lang === 'hi-translit') state.recognition.lang = 'hi-IN';
 
   state.recognition.onstart = () => {
     state.isRecording = true;
@@ -165,7 +299,10 @@ function initSpeechRecognition() {
     let newlyFinalized = '';
 
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
+      let transcript = event.results[i][0].transcript;
+      // Convert any Devanagari Hindi to English writing letters
+      transcript = toEnglishScript(transcript);
+
       if (event.results[i].isFinal) {
         newlyFinalized += transcript + ' ';
       } else {
@@ -184,7 +321,6 @@ function initSpeechRecognition() {
     const fullText = (state.finalTranscript + ' ' + state.interimTranscript).trim();
     if (fullText) {
       sendWsInterim(fullText, state.durationSeconds);
-      // Run local client fallback analysis if websocket is reconnecting
       analyzeClientLanguage(fullText);
     }
   };
@@ -846,6 +982,44 @@ async function refineCurrentTranscript() {
   }
 }
 
+// Translate transcript to pure English
+async function translateCurrentTranscript() {
+  const text = (state.finalTranscript + ' ' + state.interimTranscript).trim();
+  if (!text) {
+    showToast('No text available to translate! Speak first.', 'error');
+    return;
+  }
+
+  try {
+    elements.translateBtn.disabled = true;
+    elements.translateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Translating...';
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (state.geminiKey) headers['X-Gemini-Key'] = state.geminiKey;
+
+    const res = await fetch('/api/ai/translate-to-english', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ text: text })
+    });
+
+    const data = await res.json();
+    if (data.translatedText) {
+      state.finalTranscript = data.translatedText;
+      state.interimTranscript = '';
+      updateTranscriptUI();
+      elements.detectedLanguageBadge.textContent = 'English (Translated)';
+      elements.detectedLanguageBadge.className = 'detected-badge';
+      showToast('Translated to English writing text!', 'success');
+    }
+  } catch (err) {
+    showToast('Translation error: ' + err.message, 'error');
+  } finally {
+    elements.translateBtn.disabled = false;
+    elements.translateBtn.innerHTML = '<i class="fas fa-language"></i> Translate to English';
+  }
+}
+
 // ==========================================
 // UTILITIES & EVENT LISTENERS
 // ==========================================
@@ -913,6 +1087,26 @@ function initEventListeners() {
     }
     playTTS(text);
   });
+
+  if (elements.translateBtn) {
+    elements.translateBtn.addEventListener('click', translateCurrentTranscript);
+  }
+
+  if (elements.scriptModeSelect) {
+    elements.scriptModeSelect.addEventListener('change', (e) => {
+      const mode = e.target.value;
+      if (mode === 'hi-translit') {
+        state.recognition.lang = 'hi-IN';
+        showToast('Hindi speech with real-time English text transliteration active', 'info');
+      } else {
+        state.recognition.lang = mode;
+        showToast(`Output set to ${mode}`, 'info');
+      }
+      if (state.isRecording) {
+        state.recognition.stop();
+      }
+    });
+  }
 
   if (elements.refineBtn) {
     elements.refineBtn.addEventListener('click', refineCurrentTranscript);

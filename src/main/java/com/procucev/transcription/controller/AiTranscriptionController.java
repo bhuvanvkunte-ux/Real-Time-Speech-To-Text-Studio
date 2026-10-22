@@ -48,7 +48,7 @@ public class AiTranscriptionController {
     }
 
     /**
-     * Refine and punctuate transcribed speech
+     * Refine and punctuate transcribed speech in English alphabet
      */
     @PostMapping("/refine")
     public ResponseEntity<Map<String, String>> refineTranscript(
@@ -58,5 +58,28 @@ public class AiTranscriptionController {
         String text = payload.get("text");
         String refined = aiService.refineTranscript(text, customKey);
         return ResponseEntity.ok(Collections.singletonMap("refinedText", refined));
+    }
+
+    /**
+     * Translate Hindi or Hinglish transcription into fluent English
+     */
+    @PostMapping("/translate-to-english")
+    public ResponseEntity<Map<String, String>> translateToEnglish(
+            @RequestBody Map<String, String> payload,
+            @RequestHeader(value = "X-Gemini-Key", required = false) String customKey
+    ) {
+        String text = payload.get("text");
+        String translated = aiService.translateToEnglish(text, customKey);
+        return ResponseEntity.ok(Collections.singletonMap("translatedText", translated));
+    }
+
+    /**
+     * Convert any Devanagari text into Roman/English alphabet
+     */
+    @PostMapping("/to-roman")
+    public ResponseEntity<Map<String, String>> toRomanScript(@RequestBody Map<String, String> payload) {
+        String text = payload.get("text");
+        String roman = aiService.toRomanScript(text);
+        return ResponseEntity.ok(Collections.singletonMap("romanText", roman));
     }
 }

@@ -38,6 +38,9 @@ public class TranscriptionService {
             throw new IllegalArgumentException("Transcription content cannot be empty.");
         }
 
+        // Convert any Devanagari Hindi script to English/Roman writing text
+        content = aiService.toRomanScript(content);
+
         // Auto-detect language if not explicitly provided or generic
         String detectedLang = request.getDetectedLanguage();
         if (detectedLang == null || detectedLang.trim().isEmpty() || detectedLang.equalsIgnoreCase("Auto")) {
