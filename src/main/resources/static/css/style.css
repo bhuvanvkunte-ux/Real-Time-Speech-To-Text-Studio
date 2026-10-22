@@ -797,11 +797,44 @@ body {
   color: #cbd5e1;
   line-height: 1.6;
   margin-bottom: 16px;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.card-text-box {
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.card-text-box.hinglish-box {
+  background: rgba(192, 132, 252, 0.08);
+  border-left: 3px solid #c084fc;
+  color: #f3e8ff;
+}
+
+.card-text-box.english-box {
+  background: rgba(6, 182, 212, 0.08);
+  border-left: 3px solid var(--accent-cyan);
+  color: #e0f2fe;
+}
+
+.card-text-box .box-tag {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 4px;
+}
+
+.card-text-box.hinglish-box .box-tag {
+  color: #c084fc;
+}
+
+.card-text-box.english-box .box-tag {
+  color: var(--accent-cyan);
 }
 
 .card-meta {

@@ -43,6 +43,10 @@ const elements = {
   waveCanvas: document.getElementById('waveCanvas'),
   liveOutput: document.getElementById('liveOutput'),
   interimOutput: document.getElementById('interimOutput'),
+  liveEnglishOutput: document.getElementById('liveEnglishOutput'),
+  copyHinglishBtn: document.getElementById('copyHinglishBtn'),
+  copyEnglishBtn: document.getElementById('copyEnglishBtn'),
+  ttsEnglishBtn: document.getElementById('ttsEnglishBtn'),
   detectedLanguageBadge: document.getElementById('detectedLanguageBadge'),
   timerDisplay: document.getElementById('timerDisplay'),
   wordCountDisplay: document.getElementById('wordCountDisplay'),
@@ -110,6 +114,9 @@ function initWebSocket() {
         const data = JSON.parse(event.data);
         if (data.type === 'INTERIM_ANALYSIS') {
           handleInterimAnalysis(data);
+          if (data.englishTranslation && elements.liveEnglishOutput) {
+            elements.liveEnglishOutput.textContent = data.englishTranslation;
+          }
         } else if (data.type === 'TRANSCRIPTION_SAVED') {
           showToast('Transcription saved to MySQL database!', 'success');
           loadTranscriptions();
@@ -211,13 +218,44 @@ function toEnglishScript(text) {
     'यस': 'yes',
     'नो': 'no',
     'सर': 'sir',
-    'मैम': 'maam'
+    'मैम': 'maam',
+    'मैं': 'main',
+    'हूँ': 'hoon',
+    'हु': 'hu',
+    'मुझे': 'mujhe',
+    'तुझे': 'tujhe',
+    'उसे': 'use',
+    'उसका': 'uska',
+    'उनकी': 'unki',
+    'उनका': 'unka',
+    'ये': 'ye',
+    'यह': 'yeh',
+    'वह': 'woh',
+    'वो': 'wo',
+    'एक': 'ek',
+    'दो': 'do',
+    'तीन': 'teen',
+    'सॉफ्टवेयर': 'software',
+    'इंजीनियर': 'engineer',
+    'डेवलपर': 'developer',
+    'कंपनी': 'company',
+    'बहुत': 'bahut',
+    'बढ़िया': 'badiya',
+    'बढ़िया': 'badiya',
+    'बड़ा': 'bada',
+    'बड़ी': 'badi',
+    'कुछ': 'kuch',
+    'कोई': 'koi',
+    'सब': 'sab'
   };
 
   for (const [hindi, eng] of Object.entries(wordMap)) {
-    const reg = new RegExp('\\b' + hindi + '\\b', 'gi');
-    res = res.replace(reg, eng);
+    const reg = new RegExp('(^|\\s|[.,!?;:])' + hindi + '(?=$|\\s|[.,!?;:])', 'g');
+    res = res.replace(reg, (m, p1) => p1 + eng);
   }
+
+  // Normalize nuktas and special characters
+  res = res.replace(/क़/g, 'q').replace(/ख़/g, 'kh').replace(/ग़/g, 'gh').replace(/ज़/g, 'z').replace(/ड़/g, 'r').replace(/ढ़/g, 'rh').replace(/फ़/g, 'f');
 
   // If already pure English / Latin alphabet, return
   if (!/[\u0900-\u097F]/.test(res)) {
@@ -241,8 +279,7 @@ function toEnglishScript(text) {
     'ट': 't', 'ठ': 'th', 'ड': 'd', 'ढ': 'dh', 'ण': 'n',
     'त': 't', 'थ': 'th', 'द': 'd', 'ध': 'dh', 'न': 'n',
     'प': 'p', 'फ': 'ph', 'ब': 'b', 'भ': 'bh', 'म': 'm',
-    'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'v', 'श': 'sh', 'ष': 'sh', 'स': 's', 'ह': 'h',
-    'क़': 'q', 'ख़': 'kh', 'ग़': 'gh', 'ज़': 'z', 'ड़': 'r', 'ढ़': 'rh', 'फ़': 'f'
+    'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'v', 'श': 'sh', 'ष': 'sh', 'स': 's', 'ह': 'h'
   };
 
   let out = '';
@@ -268,6 +305,120 @@ function toEnglishScript(text) {
   }
 
   return out;
+}
+
+// Instant real-time pure English translation
+function translateToEnglishText(text) {
+  if (!text) return '';
+  let res = toEnglishScript(text);
+
+  const phraseMap = [
+    [/mera\s+naam\s+([a-zA-Z]+)\s+hai/gi, 'My name is $1'],
+    [/mera\s+nam\s+([a-zA-Z]+)\s+hai/gi, 'My name is $1'],
+    [/meri\s+naam\s+([a-zA-Z]+)\s+hai/gi, 'My name is $1'],
+    [/main\s+ek\s+([a-zA-Z]+)\s+hoon/gi, 'I am a $1'],
+    [/main\s+([a-zA-Z]+)\s+hoon/gi, 'I am $1'],
+    [/main\s+([a-zA-Z]+)\s+hu/gi, 'I am $1'],
+    [/acchi\s+baat\s+hai/gi, "that is a good thing"],
+    [/achchhee\s+bat\s+hai/gi, "that is a good thing"],
+    [/buri\s+baat\s+nahi\s+hai/gi, "not a bad thing"],
+    [/buree\s+bat\s+naheen\s+hai/gi, "not a bad thing"],
+    [/buri\s+baat\s+hai/gi, "that is a bad thing"],
+    [/koi\s+baat\s+nahi/gi, "no problem"],
+    [/aap\s+kaise\s+ho/gi, "how are you"],
+    [/tum\s+kaise\s+ho/gi, "how are you"],
+    [/kaise\s+ho/gi, "how are you"],
+    [/kya\s+haal\s+hai/gi, "how are you doing"],
+    [/theek\s+hai/gi, "it is fine"],
+    [/bahut\s+accha/gi, "very good"],
+    [/bahut\s+badiya/gi, "very wonderful"],
+    [/karna\s+hai/gi, "need to do"],
+    [/kal\s+meeting\s+me/gi, "tomorrow in the meeting"],
+    [/hum\s+discuss\s+karenge/gi, "we will discuss"],
+    [/shuru\s+karo/gi, "please start"],
+    [/shuru\s+kijiye/gi, "please start"],
+    [/khatam\s+ho\s+gaya/gi, "it is finished"],
+    [/kaam\s+ho\s+gaya/gi, "work is done"],
+    [/ye\s+kya\s+hai/gi, "what is this"],
+    [/ye\s+bahut\s+accha\s+hai/gi, "this is very good"],
+    [/mujhe\s+chahiye/gi, "I need"],
+    [/nahi\s+hai/gi, "is not"],
+    [/naheen\s+hai/gi, "is not"],
+    [/nahi\s+hoga/gi, "will not happen"],
+    [/kuch\s+bhi/gi, "anything"],
+    [/sab\s+kuch/gi, "everything"],
+    [/ek\s+minute/gi, "one minute"]
+  ];
+
+  for (const [pattern, replacement] of phraseMap) {
+    res = res.replace(pattern, replacement);
+  }
+
+  const wordMap = [
+    [/\baaj\b/gi, 'today'],
+    [/\bkal\b/gi, 'tomorrow'],
+    [/\bparso\b/gi, 'day after tomorrow'],
+    [/\babhi\b/gi, 'now'],
+    [/\baap\b/gi, 'you'],
+    [/\baapka\b/gi, 'your'],
+    [/\btum\b/gi, 'you'],
+    [/\btumhara\b/gi, 'your'],
+    [/\bhum\b/gi, 'we'],
+    [/\bhumara\b/gi, 'our'],
+    [/\bmera\b/gi, 'my'],
+    [/\bmeri\b/gi, 'my'],
+    [/\bmere\b/gi, 'my'],
+    [/\bnaam\b/gi, 'name'],
+    [/\bkya\b/gi, 'what'],
+    [/\bkyu\b/gi, 'why'],
+    [/\bkyun\b/gi, 'why'],
+    [/\bkahan\b/gi, 'where'],
+    [/\bkab\b/gi, 'when'],
+    [/\bkaise\b/gi, 'how'],
+    [/\baccha\b/gi, 'good'],
+    [/\bacchi\b/gi, 'good'],
+    [/\bacche\b/gi, 'good'],
+    [/\bbura\b/gi, 'bad'],
+    [/\bburi\b/gi, 'bad'],
+    [/\bnahi\b/gi, 'not'],
+    [/\bnaheen\b/gi, 'not'],
+    [/\bmat\b/gi, "don't"],
+    [/\bhaan\b/gi, 'yes'],
+    [/\baur\b/gi, 'and'],
+    [/\blekin\b/gi, 'but'],
+    [/\bmagar\b/gi, 'but'],
+    [/\bya\b/gi, 'or'],
+    [/\bbhi\b/gi, 'also'],
+    [/\btoh\b/gi, 'then'],
+    [/\bshukriya\b/gi, 'thank you'],
+    [/\bdhanyavad\b/gi, 'thank you'],
+    [/\bnamaste\b/gi, 'hello'],
+    [/\bkaam\b/gi, 'work'],
+    [/\bbaat\b/gi, 'matter'],
+    [/\bdost\b/gi, 'friend'],
+    [/\byaar\b/gi, 'friend'],
+    [/\bhai\b/gi, 'is'],
+    [/\bhain\b/gi, 'are'],
+    [/\bhoon\b/gi, 'am'],
+    [/\btha\b/gi, 'was'],
+    [/\bthi\b/gi, 'was'],
+    [/\bthe\b/gi, 'were']
+  ];
+
+  for (const [pattern, replacement] of wordMap) {
+    res = res.replace(pattern, replacement);
+  }
+
+  res = res.replace(/\s+/g, ' ').trim();
+
+  if (res.length > 0) {
+    res = res.charAt(0).toUpperCase() + res.slice(1);
+    if (!res.endsWith('.') && !res.endsWith('?') && !res.endsWith('!')) {
+      res += '.';
+    }
+  }
+
+  return res;
 }
 
 // ==========================================
@@ -546,6 +697,9 @@ function updateTranscriptUI() {
   elements.interimOutput.textContent = state.interimTranscript;
 
   const totalText = (state.finalTranscript + ' ' + state.interimTranscript).trim();
+  if (elements.liveEnglishOutput) {
+    elements.liveEnglishOutput.textContent = translateToEnglishText(totalText);
+  }
   const words = totalText ? totalText.split(/\s+/).length : 0;
   elements.wordCountDisplay.textContent = `${words} words`;
 }
@@ -617,9 +771,11 @@ async function saveCurrentTranscription() {
   stopRecording();
 
   const detectedLang = elements.detectedLanguageBadge.textContent || 'Hinglish (Hindi + English)';
+  const englishTrans = (elements.liveEnglishOutput ? elements.liveEnglishOutput.textContent.trim() : '') || translateToEnglishText(content);
   const payload = {
     title: '', // Server will auto-generate based on content
     content: content,
+    englishTranslation: englishTrans,
     detectedLanguage: detectedLang,
     confidence: 0.96,
     durationSeconds: state.durationSeconds,
@@ -704,6 +860,8 @@ function renderTranscriptions(list) {
     const badgeClass = isHinglish ? 'detected-badge hinglish' : 'detected-badge';
     const formattedDate = formatDateTime(item.createdAt);
 
+    const englishTrans = item.englishTranslation || translateToEnglishText(item.content);
+
     card.innerHTML = `
       <div>
         <div class="card-top">
@@ -716,7 +874,18 @@ function renderTranscriptions(list) {
           </div>
           <span class="${badgeClass}">${escapeHtml(item.detectedLanguage)}</span>
         </div>
-        <div class="card-content">${escapeHtml(item.content)}</div>
+
+        <!-- Box 1: Hindi + English (Hinglish) -->
+        <div class="card-text-box hinglish-box">
+          <span class="box-tag"><i class="fas fa-comments"></i> 1. Hindi + English (Hinglish)</span>
+          ${escapeHtml(item.content)}
+        </div>
+
+        <!-- Box 2: Pure English Translation -->
+        <div class="card-text-box english-box">
+          <span class="box-tag"><i class="fas fa-language"></i> 2. Pure English Translation</span>
+          ${escapeHtml(englishTrans)}
+        </div>
       </div>
 
       <div>
@@ -727,15 +896,21 @@ function renderTranscriptions(list) {
         </div>
         <div class="card-actions">
           <div class="action-buttons-left">
-            <button class="btn btn-secondary btn-icon" title="Listen with TTS" onclick="playTTS('${escapeQuote(item.content)}')">
+            <button class="btn btn-secondary btn-icon" title="Listen Hindi+English" onclick="playTTS('${escapeQuote(item.content)}')">
               <i class="fas fa-volume-up"></i>
+            </button>
+            <button class="btn btn-secondary btn-icon" title="Listen English Translation" onclick="playTTS('${escapeQuote(englishTrans)}')">
+              <i class="fas fa-language"></i>
             </button>
             ${item.audioData ? `
               <button class="btn btn-secondary btn-icon" title="Replay Recorded Voice" onclick="playRecordedAudio('${item.audioData}')">
                 <i class="fas fa-play"></i>
               </button>` : ''}
-            <button class="btn btn-secondary btn-icon" title="Copy Text" onclick="copyCardText('${escapeQuote(item.content)}')">
+            <button class="btn btn-secondary btn-icon" title="Copy Hindi+English" onclick="copyCardText('${escapeQuote(item.content)}')">
               <i class="far fa-copy"></i>
+            </button>
+            <button class="btn btn-secondary btn-icon" title="Copy English Translation" onclick="copyCardText('${escapeQuote(englishTrans)}')">
+              <i class="fas fa-clone"></i>
             </button>
           </div>
           <div class="action-buttons-right">
@@ -1031,6 +1206,7 @@ function clearStudio() {
   state.audioBlob = null;
   state.audioBase64 = null;
   updateTranscriptUI();
+  if (elements.liveEnglishOutput) elements.liveEnglishOutput.textContent = '';
   elements.timerDisplay.textContent = '00:00:00';
   elements.wordCountDisplay.textContent = '0 words';
   elements.detectedLanguageBadge.textContent = 'Hinglish (Hindi + English)';
@@ -1078,6 +1254,41 @@ function initEventListeners() {
     navigator.clipboard.writeText(text);
     showToast('Copied to clipboard!', 'success');
   });
+
+  if (elements.copyHinglishBtn) {
+    elements.copyHinglishBtn.addEventListener('click', () => {
+      const text = (elements.liveOutput ? elements.liveOutput.textContent.trim() : '');
+      if (!text) {
+        showToast('No Hindi+English text to copy!', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(text);
+      showToast('Copied Hindi+English (Hinglish) text!', 'success');
+    });
+  }
+
+  if (elements.copyEnglishBtn) {
+    elements.copyEnglishBtn.addEventListener('click', () => {
+      const text = (elements.liveEnglishOutput ? elements.liveEnglishOutput.textContent.trim() : '');
+      if (!text) {
+        showToast('No English text to copy!', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(text);
+      showToast('Copied English Translation!', 'success');
+    });
+  }
+
+  if (elements.ttsEnglishBtn) {
+    elements.ttsEnglishBtn.addEventListener('click', () => {
+      const text = (elements.liveEnglishOutput ? elements.liveEnglishOutput.textContent.trim() : '');
+      if (!text) {
+        showToast('No English text to speak!', 'error');
+        return;
+      }
+      playTTS(text);
+    });
+  }
 
   elements.ttsBtn.addEventListener('click', () => {
     const text = (state.finalTranscript + ' ' + state.interimTranscript).trim();

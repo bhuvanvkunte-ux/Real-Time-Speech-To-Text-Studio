@@ -88,11 +88,11 @@
 
       <!-- Output Script Selector -->
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-        <span style="font-size:13px;font-weight:600;color:var(--text-muted);"><i class="fas fa-keyboard"></i> Output Text Writing:</span>
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted);"><i class="fas fa-sliders-h"></i> Speech Recognition Mode:</span>
         <select id="scriptModeSelect" class="form-control" style="width:auto;padding:8px 16px;background:rgba(0,0,0,0.5);border:1px solid var(--border-glass-bright);border-radius:var(--radius-full);font-size:13px;color:#fff;">
-          <option value="en-IN" selected>🔤 English Writing Text (Hinglish / Latin Script)</option>
-          <option value="en-US">🇺🇸 English Writing Text (Global en-US)</option>
-          <option value="hi-translit">🇮🇳 Hindi Voice → English Writing Transliteration</option>
+          <option value="en-IN" selected>🌐 Multilingual Mode (Hindi + English in English Writing)</option>
+          <option value="hi-translit">🇮🇳 Hindi Speech → English Writing Transliteration</option>
+          <option value="en-US">🇺🇸 Pure English Mode</option>
         </select>
       </div>
 
@@ -124,19 +124,51 @@
         </button>
       </div>
 
-      <!-- Transcription Display Box -->
+      <!-- Transcription Display Box (Dual-Stream: Hindi+English & English) -->
       <div class="transcription-box">
         <div class="transcription-box-header">
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);">Live Output</span>
+            <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#a5b4fc;">
+              <i class="fas fa-layer-group"></i> Dual Real-Time Output
+            </span>
             <span id="detectedLanguageBadge" class="detected-badge hinglish">Hinglish (Hindi + English)</span>
           </div>
           <div id="tokenTags" class="token-tags"></div>
         </div>
 
-        <!-- Live Transcribed Text -->
-        <div class="live-output-content">
-          <span id="liveOutput"></span><span id="interimOutput" class="interim-text"></span><span class="cursor-blink"></span>
+        <!-- Stream 1: Hindi + English (Hinglish in English writing) -->
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;font-weight:700;color:#c084fc;text-transform:uppercase;letter-spacing:0.8px;">
+              <i class="fas fa-comments"></i> 1. Hindi + English (Hinglish in English Writing)
+            </span>
+            <button id="copyHinglishBtn" class="btn btn-secondary" style="padding:2px 8px;font-size:11px;" title="Copy Hindi+English">
+              <i class="far fa-copy"></i> Copy
+            </button>
+          </div>
+          <div class="live-output-content" style="min-height:50px;">
+            <span id="liveOutput"></span><span id="interimOutput" class="interim-text"></span><span class="cursor-blink"></span>
+          </div>
+        </div>
+
+        <!-- Stream 2: Pure English Translation -->
+        <div style="padding-top:12px;border-top:1px dashed var(--border-glass-bright);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;font-weight:700;color:var(--accent-cyan);text-transform:uppercase;letter-spacing:0.8px;">
+              <i class="fas fa-language"></i> 2. Pure English Translation
+            </span>
+            <div style="display:flex;gap:6px;">
+              <button id="ttsEnglishBtn" class="btn btn-secondary" style="padding:2px 8px;font-size:11px;" title="Listen to English Translation">
+                <i class="fas fa-volume-up"></i> Listen
+              </button>
+              <button id="copyEnglishBtn" class="btn btn-secondary" style="padding:2px 8px;font-size:11px;" title="Copy English Translation">
+                <i class="far fa-copy"></i> Copy
+              </button>
+            </div>
+          </div>
+          <div class="live-output-content" style="min-height:50px;color:#e2e8f0;">
+            <span id="liveEnglishOutput"></span>
+          </div>
         </div>
 
         <!-- Audio Replay Player Preview (Recorded Mic) -->

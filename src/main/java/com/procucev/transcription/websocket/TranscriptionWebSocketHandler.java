@@ -57,9 +57,12 @@ public class TranscriptionWebSocketHandler extends TextWebSocketHandler {
 
                 LanguageDetectionResponse langAnalysis = aiService.detectLanguage(interimText);
 
+                String englishTranslation = aiService.translateToEnglish(interimText, null);
+
                 Map<String, Object> reply = new HashMap<>();
                 reply.put("type", "INTERIM_ANALYSIS");
                 reply.put("text", interimText);
+                reply.put("englishTranslation", englishTranslation);
                 reply.put("detectedLanguage", langAnalysis.getPrimaryLanguage());
                 reply.put("isMultilingual", langAnalysis.isMultilingual());
                 reply.put("hindiScore", langAnalysis.getHindiScore());

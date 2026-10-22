@@ -59,6 +59,11 @@ public class TranscriptionService {
             tags = detectedLang.contains("Hinglish") ? "Hinglish, Multilingual" : detectedLang;
         }
 
+        String translation = request.getEnglishTranslation();
+        if (translation == null || translation.trim().isEmpty()) {
+            translation = aiService.translateToEnglish(content, null);
+        }
+
         Transcription entity = new Transcription(
                 title.trim(),
                 content,
@@ -68,6 +73,7 @@ public class TranscriptionService {
                 request.getAudioData(),
                 tags
         );
+        entity.setEnglishTranslation(translation);
 
         Transcription saved = repository.save(entity);
         return TranscriptionResponse.fromEntity(saved);
@@ -130,6 +136,10 @@ public class TranscriptionService {
 
         if (request.getAudioData() != null) {
             existing.setAudioData(request.getAudioData());
+        }
+
+        if (request.getEnglishTranslation() != null) {
+            existing.setEnglishTranslation(request.getEnglishTranslation().trim());
         }
 
         Transcription updated = repository.save(existing);

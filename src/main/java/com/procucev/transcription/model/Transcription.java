@@ -32,6 +32,9 @@ public class Transcription {
     @Column(name = "audio_data", columnDefinition = "LONGTEXT")
     private String audioData;
 
+    @Column(name = "english_translation", columnDefinition = "LONGTEXT")
+    private String englishTranslation;
+
     @Column(length = 255)
     private String tags;
 
@@ -184,5 +187,13 @@ public class Transcription {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getEnglishTranslation() {
+        return englishTranslation;
+    }
+
+    public void setEnglishTranslation(String englishTranslation) {
+        this.englishTranslation = englishTranslation;
     }
 }

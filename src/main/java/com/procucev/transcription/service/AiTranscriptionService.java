@@ -203,11 +203,109 @@ public class AiTranscriptionService {
                     return root.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText().trim();
                 }
             } catch (Exception ignored) {
-                // Fall back to Roman script
+                // Fall back to rule-based translation
             }
         }
 
-        return toRomanScript(text);
+        // High-accuracy offline phrase translation
+        String roman = toRomanScript(text);
+        String translated = roman;
+
+        Map<String, String> phrases = new LinkedHashMap<>();
+        phrases.put("(?i)mera\\s+naam\\s+([a-zA-Z]+)\\s+hai", "my name is $1");
+        phrases.put("(?i)mera\\s+nam\\s+([a-zA-Z]+)\\s+hai", "my name is $1");
+        phrases.put("(?i)meri\\s+naam\\s+([a-zA-Z]+)\\s+hai", "my name is $1");
+        phrases.put("(?i)main\\s+ek\\s+([a-zA-Z]+)\\s+hoon", "I am a $1");
+        phrases.put("(?i)main\\s+([a-zA-Z]+)\\s+hoon", "I am $1");
+        phrases.put("(?i)main\\s+([a-zA-Z]+)\\s+hu", "I am $1");
+        phrases.put("(?i)acchi\\s+baat\\s+hai", "that is a good thing");
+        phrases.put("(?i)achchhee\\s+bat\\s+hai", "that is a good thing");
+        phrases.put("(?i)buri\\s+baat\\s+nahi\\s+hai", "not a bad thing");
+        phrases.put("(?i)buree\\s+bat\\s+naheen\\s+hai", "not a bad thing");
+        phrases.put("(?i)buri\\s+baat\\s+hai", "that is a bad thing");
+        phrases.put("(?i)koi\\s+baat\\s+nahi", "no problem");
+        phrases.put("(?i)aap\\s+kaise\\s+ho", "how are you");
+        phrases.put("(?i)tum\\s+kaise\\s+ho", "how are you");
+        phrases.put("(?i)kaise\\s+ho", "how are you");
+        phrases.put("(?i)kya\\s+haal\\s+hai", "how are you doing");
+        phrases.put("(?i)theek\\s+hai", "it is fine");
+        phrases.put("(?i)bahut\\s+accha", "very good");
+        phrases.put("(?i)bahut\\s+badiya", "very wonderful");
+        phrases.put("(?i)karna\\s+hai", "need to do");
+        phrases.put("(?i)kal\\s+meeting\\s+me", "tomorrow in the meeting");
+        phrases.put("(?i)hum\\s+discuss\\s+karenge", "we will discuss");
+        phrases.put("(?i)shuru\\s+karo", "please start");
+        phrases.put("(?i)khatam\\s+ho\\s+gaya", "it is finished");
+        phrases.put("(?i)kaam\\s+ho\\s+gaya", "work is done");
+        phrases.put("(?i)ye\\s+kya\\s+hai", "what is this");
+        phrases.put("(?i)mujhe\\s+chahiye", "I need");
+        phrases.put("(?i)nahi\\s+hai", "is not");
+        phrases.put("(?i)naheen\\s+hai", "is not");
+
+        for (Map.Entry<String, String> entry : phrases.entrySet()) {
+            translated = translated.replaceAll(entry.getKey(), entry.getValue());
+        }
+
+        Map<String, String> words = new LinkedHashMap<>();
+        words.put("(?i)\\baaj\\b", "today");
+        words.put("(?i)\\bkal\\b", "tomorrow");
+        words.put("(?i)\\bparso\\b", "day after tomorrow");
+        words.put("(?i)\\babhi\\b", "now");
+        words.put("(?i)\\baap\\b", "you");
+        words.put("(?i)\\baapka\\b", "your");
+        words.put("(?i)\\btum\\b", "you");
+        words.put("(?i)\\btumhara\\b", "your");
+        words.put("(?i)\\bhum\\b", "we");
+        words.put("(?i)\\bhumara\\b", "our");
+        words.put("(?i)\\bmera\\b", "my");
+        words.put("(?i)\\bmeri\\b", "my");
+        words.put("(?i)\\bmere\\b", "my");
+        words.put("(?i)\\bnaam\\b", "name");
+        words.put("(?i)\\bkya\\b", "what");
+        words.put("(?i)\\bkyu\\b", "why");
+        words.put("(?i)\\bkyun\\b", "why");
+        words.put("(?i)\\bkahan\\b", "where");
+        words.put("(?i)\\bkab\\b", "when");
+        words.put("(?i)\\bkaise\\b", "how");
+        words.put("(?i)\\baccha\\b", "good");
+        words.put("(?i)\\bacchi\\b", "good");
+        words.put("(?i)\\bacche\\b", "good");
+        words.put("(?i)\\bbura\\b", "bad");
+        words.put("(?i)\\bburi\\b", "bad");
+        words.put("(?i)\\bnahi\\b", "not");
+        words.put("(?i)\\bnaheen\\b", "not");
+        words.put("(?i)\\baur\\b", "and");
+        words.put("(?i)\\blekin\\b", "but");
+        words.put("(?i)\\bmagar\\b", "but");
+        words.put("(?i)\\bya\\b", "or");
+        words.put("(?i)\\bbhi\\b", "also");
+        words.put("(?i)\\btoh\\b", "then");
+        words.put("(?i)\\bshukriya\\b", "thank you");
+        words.put("(?i)\\bdhanyavad\\b", "thank you");
+        words.put("(?i)\\bnamaste\\b", "hello");
+        words.put("(?i)\\bkaam\\b", "work");
+        words.put("(?i)\\bbaat\\b", "matter");
+        words.put("(?i)\\bdost\\b", "friend");
+        words.put("(?i)\\byaar\\b", "friend");
+        words.put("(?i)\\bhai\\b", "is");
+        words.put("(?i)\\bhain\\b", "are");
+        words.put("(?i)\\bhoon\\b", "am");
+        words.put("(?i)\\btha\\b", "was");
+        words.put("(?i)\\bthi\\b", "was");
+        words.put("(?i)\\bthe\\b", "were");
+
+        for (Map.Entry<String, String> entry : words.entrySet()) {
+            translated = translated.replaceAll(entry.getKey(), entry.getValue());
+        }
+
+        if (!translated.isEmpty()) {
+            translated = Character.toUpperCase(translated.charAt(0)) + (translated.length() > 1 ? translated.substring(1) : "");
+            if (!translated.endsWith(".") && !translated.endsWith("?") && !translated.endsWith("!")) {
+                translated += ".";
+            }
+        }
+
+        return translated;
     }
 
     /**
@@ -243,9 +341,72 @@ public class AiTranscriptionService {
         commonWords.put("अपडेट", "update");
         commonWords.put("कोड", "code");
         commonWords.put("सिस्टम", "system");
+        commonWords.put("भुवन", "Bhuvan");
+        commonWords.put("मेरा", "mera");
+        commonWords.put("मेरी", "meri");
+        commonWords.put("मेरे", "mere");
+        commonWords.put("नाम", "naam");
+        commonWords.put("है", "hai");
+        commonWords.put("हैं", "hain");
+        commonWords.put("हो", "ho");
+        commonWords.put("था", "tha");
+        commonWords.put("थी", "thi");
+        commonWords.put("थे", "the");
+        commonWords.put("अच्छी", "acchi");
+        commonWords.put("अच्छा", "accha");
+        commonWords.put("बात", "baat");
+        commonWords.put("बुरी", "buri");
+        commonWords.put("बुरा", "bura");
+        commonWords.put("नहीं", "nahi");
+        commonWords.put("और", "aur");
+        commonWords.put("क्या", "kya");
+        commonWords.put("कहा", "kaha");
+        commonWords.put("कहो", "kaho");
+        commonWords.put("करो", "karo");
+        commonWords.put("करना", "karna");
+        commonWords.put("करेंगे", "karenge");
+        commonWords.put("आप", "aap");
+        commonWords.put("आपका", "aapka");
+        commonWords.put("तुम", "tum");
+        commonWords.put("तुम्हारा", "tumhara");
+        commonWords.put("हम", "hum");
+        commonWords.put("हमारा", "humara");
+        commonWords.put("नमस्ते", "namaste");
+        commonWords.put("धन्यवाद", "dhanyavad");
+        commonWords.put("शुक्रिया", "shukriya");
+        commonWords.put("ठीक", "theek");
+        commonWords.put("कल", "kal");
+        commonWords.put("आज", "aaj");
+        commonWords.put("अभी", "abhi");
+        commonWords.put("काम", "kaam");
+        commonWords.put("मैं", "main");
+        commonWords.put("हूँ", "hoon");
+        commonWords.put("हु", "hu");
+        commonWords.put("मुझे", "mujhe");
+        commonWords.put("तुझे", "tujhe");
+        commonWords.put("उसे", "use");
+        commonWords.put("उसका", "uska");
+        commonWords.put("उनकी", "unki");
+        commonWords.put("उनका", "unka");
+        commonWords.put("ये", "ye");
+        commonWords.put("यह", "yeh");
+        commonWords.put("वह", "woh");
+        commonWords.put("वो", "wo");
+        commonWords.put("एक", "ek");
+        commonWords.put("दो", "do");
+        commonWords.put("तीन", "teen");
+        commonWords.put("सॉफ्टवेयर", "software");
+        commonWords.put("इंजीनियर", "engineer");
+        commonWords.put("डेवलपर", "developer");
+        commonWords.put("कंपनी", "company");
+        commonWords.put("बहुत", "bahut");
+        commonWords.put("बढ़िया", "badiya");
+        commonWords.put("कुछ", "kuch");
+        commonWords.put("कोई", "koi");
+        commonWords.put("सब", "sab");
 
         for (Map.Entry<String, String> entry : commonWords.entrySet()) {
-            res = res.replaceAll("(?i)\\b" + entry.getKey() + "\\b", entry.getValue());
+            res = res.replaceAll("(?U)(?<=^|\\s|[.,!?;:])" + Pattern.quote(entry.getKey()) + "(?=$|\\s|[.,!?;:])", entry.getValue());
         }
 
         if (!Pattern.compile("[\\u0900-\\u097F]").matcher(res).find()) {

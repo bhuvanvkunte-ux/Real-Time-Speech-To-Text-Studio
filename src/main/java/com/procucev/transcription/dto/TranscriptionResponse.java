@@ -13,6 +13,7 @@ public class TranscriptionResponse {
     private Double durationSeconds;
     private Integer wordCount;
     private String audioData;
+    private String englishTranslation;
     private String tags;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -29,6 +30,7 @@ public class TranscriptionResponse {
         resp.setDurationSeconds(entity.getDurationSeconds());
         resp.setWordCount(entity.getWordCount());
         resp.setAudioData(entity.getAudioData());
+        resp.setEnglishTranslation(entity.getEnglishTranslation());
         resp.setTags(entity.getTags());
         resp.setCreatedAt(entity.getCreatedAt());
         resp.setUpdatedAt(entity.getUpdatedAt());
@@ -121,5 +123,13 @@ public class TranscriptionResponse {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getEnglishTranslation() {
+        return englishTranslation;
+    }
+
+    public void setEnglishTranslation(String englishTranslation) {
+        this.englishTranslation = englishTranslation;
     }
 }
