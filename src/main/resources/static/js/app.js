@@ -914,10 +914,10 @@ function renderTranscriptions(list) {
             </button>
           </div>
           <div class="action-buttons-right">
-            <button class="btn btn-secondary btn-icon" title="Edit Transcription" onclick="openEditModal(${item.id})">
+            <button class="btn btn-secondary btn-icon btn-edit" title="Edit Transcription" data-id="${item.id}" onclick="openEditModal(${item.id})">
               <i class="fas fa-pencil-alt"></i>
             </button>
-            <button class="btn btn-danger btn-icon" title="Delete" onclick="deleteTranscription(${item.id})">
+            <button class="btn btn-danger btn-icon btn-delete" title="Delete" data-id="${item.id}" onclick="deleteTranscription(${item.id})">
               <i class="fas fa-trash-alt"></i>
             </button>
           </div>
@@ -926,6 +926,24 @@ function renderTranscriptions(list) {
     `;
 
     grid.appendChild(card);
+  });
+
+  // Attach delete button listeners directly to guarantee instant response
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(btn.dataset.id || btn.getAttribute('data-id'));
+      deleteTranscription(id);
+    });
+  });
+
+  // Attach edit button listeners directly
+  document.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(btn.dataset.id || btn.getAttribute('data-id'));
+      openEditModal(id);
+    });
   });
 
   // Attach checkbox listeners
@@ -990,18 +1008,36 @@ async function saveEdit() {
 
 // 4. DELETE: Delete single transcription
 async function deleteTranscription(id) {
-  if (!confirm('Are you sure you want to delete this transcription from MySQL?')) return;
+  if (!id) return;
 
   try {
-    const res = await fetch(`/api/transcriptions/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete');
+    // Immediate visual feedback: fade and scale card
+    const card = document.querySelector(`.transcription-card[data-id="${id}"]`);
+    if (card) {
+      card.style.transition = 'all 0.25s ease';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.85)';
+    }
 
-    showToast('Transcription deleted', 'info');
+    const res = await fetch(`/api/transcriptions/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete from database');
+
+    showToast('Transcription deleted from database', 'info');
     state.selectedIds.delete(id);
-    loadTranscriptions();
-    loadDashboardStats();
+
+    if (card) {
+      setTimeout(() => {
+        card.remove();
+        loadDashboardStats();
+      }, 250);
+    } else {
+      loadTranscriptions();
+      loadDashboardStats();
+    }
   } catch (err) {
+    console.error('Delete error', err);
     showToast('Error deleting transcription: ' + err.message, 'error');
+    loadTranscriptions();
   }
 }
 
@@ -1418,3 +1454,11 @@ function escapeQuote(str) {
   if (!str) return '';
   return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
 }
+
+// Global window bindings to guarantee inline HTML onclick handlers never fail
+window.deleteTranscription = deleteTranscription;
+window.openEditModal = openEditModal;
+window.playTTS = playTTS;
+window.playRecordedAudio = playRecordedAudio;
+window.copyCardText = copyCardText;
+
