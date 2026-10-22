@@ -72,6 +72,7 @@ CREATE TABLE transcriptions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     content LONGTEXT NOT NULL,
+    english_translation LONGTEXT,
     detected_language VARCHAR(100) DEFAULT 'Hinglish (Hindi + English)',
     confidence DOUBLE DEFAULT 0.95,
     duration_seconds DOUBLE DEFAULT 0.0,
