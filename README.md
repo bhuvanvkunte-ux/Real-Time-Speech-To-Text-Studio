@@ -1,10 +1,13 @@
 # Procucev AI Tech Hiring Assignment: Real-Time Multilingual Speech-to-Text Service
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Online%20on%20Render-success?style=for-the-badge&logo=render)](https://real-time-speech-to-text-studio.onrender.com/)
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg)](https://www.mysql.com/)
+[![MySQL](https://img.shields.io/badge/Database-MySQL%20%7C%20H2-blue.svg)](https://www.mysql.com/)
 [![WebSocket](https://img.shields.io/badge/Real--time-WebSocket-purple.svg)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 [![Docker](https://img.shields.io/badge/Deployment-Docker%20%7C%20Render-blueviolet.svg)](https://www.docker.com/)
+
+> 🚀 **Live Deployed Application**: **[https://real-time-speech-to-text-studio.onrender.com/](https://real-time-speech-to-text-studio.onrender.com/)**
 
 A production-grade, full-stack **Real-time Multilingual Speech-to-Text (STT)** web application engineered for code-switching sentences (such as mixtures of **Hindi & English / Hinglish**), featuring a relational database backend (**MySQL**), real-time bidirectional streaming (**WebSocket**), interactive waveform visualization (**Web Audio API**), **Text-to-Speech (TTS)** playback, and a modern glassmorphic dashboard with complete **CRUD operations**.
 
