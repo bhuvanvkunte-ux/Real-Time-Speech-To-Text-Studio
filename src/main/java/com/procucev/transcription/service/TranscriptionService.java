@@ -147,10 +147,9 @@ public class TranscriptionService {
     }
 
     public void deleteTranscription(Long id) {
-        if (!repository.existsById(id)) {
-            throw new NoSuchElementException("Transcription not found with ID: " + id);
+        if (id != null && repository.existsById(id)) {
+            repository.deleteById(id);
         }
-        repository.deleteById(id);
     }
 
     public int bulkDelete(BulkDeleteRequest bulkRequest) {

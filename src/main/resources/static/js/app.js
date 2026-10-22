@@ -914,11 +914,11 @@ function renderTranscriptions(list) {
             </button>
           </div>
           <div class="action-buttons-right">
-            <button class="btn btn-secondary btn-icon btn-edit" title="Edit Transcription" data-id="${item.id}" onclick="openEditModal(${item.id})">
-              <i class="fas fa-pencil-alt"></i>
+            <button class="btn btn-secondary btn-icon" title="Edit Transcription" onclick="openEditModal(${item.id})">
+              <i class="fas fa-pencil-alt" style="pointer-events: none;"></i>
             </button>
-            <button class="btn btn-danger btn-icon btn-delete" title="Delete" data-id="${item.id}" onclick="deleteTranscription(${item.id})">
-              <i class="fas fa-trash-alt"></i>
+            <button class="btn btn-danger btn-icon" title="Delete" onclick="deleteTranscription(event, ${item.id})">
+              <i class="fas fa-trash-alt" style="pointer-events: none;"></i>
             </button>
           </div>
         </div>
@@ -926,24 +926,6 @@ function renderTranscriptions(list) {
     `;
 
     grid.appendChild(card);
-  });
-
-  // Attach delete button listeners directly to guarantee instant response
-  document.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = parseInt(btn.dataset.id || btn.getAttribute('data-id'));
-      deleteTranscription(id);
-    });
-  });
-
-  // Attach edit button listeners directly
-  document.querySelectorAll('.btn-edit').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = parseInt(btn.dataset.id || btn.getAttribute('data-id'));
-      openEditModal(id);
-    });
   });
 
   // Attach checkbox listeners
@@ -1006,38 +988,46 @@ async function saveEdit() {
   }
 }
 
+const inFlightDeletes = new Set();
+
 // 4. DELETE: Delete single transcription
-async function deleteTranscription(id) {
-  if (!id) return;
+async function deleteTranscription(event, id) {
+  if (event && event.stopPropagation) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  // Handle either deleteTranscription(id) or deleteTranscription(event, id)
+  const actualId = (typeof event === 'number' || (typeof event === 'string' && !isNaN(event))) ? event : id;
+  if (actualId === undefined || actualId === null || actualId === '') return;
+  const targetId = String(actualId).trim();
+
+  if (inFlightDeletes.has(targetId)) return;
+  inFlightDeletes.add(targetId);
+
+  // Immediate visual feedback: fade and scale card
+  const card = document.querySelector(`.transcription-card[data-id="${targetId}"]`) ||
+               document.querySelector(`[data-id="${targetId}"]`);
+  if (card) {
+    card.style.transition = 'all 0.2s ease';
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.85)';
+    setTimeout(() => {
+      if (card && card.parentNode) card.parentNode.removeChild(card);
+    }, 200);
+  }
 
   try {
-    // Immediate visual feedback: fade and scale card
-    const card = document.querySelector(`.transcription-card[data-id="${id}"]`);
-    if (card) {
-      card.style.transition = 'all 0.25s ease';
-      card.style.opacity = '0';
-      card.style.transform = 'scale(0.85)';
-    }
-
-    const res = await fetch(`/api/transcriptions/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete from database');
-
+    const res = await fetch(`/api/transcriptions/${targetId}`, { method: 'DELETE' });
     showToast('Transcription deleted from database', 'info');
-    state.selectedIds.delete(id);
-
-    if (card) {
-      setTimeout(() => {
-        card.remove();
-        loadDashboardStats();
-      }, 250);
-    } else {
-      loadTranscriptions();
-      loadDashboardStats();
-    }
+    state.selectedIds.delete(Number(targetId));
+    loadDashboardStats();
   } catch (err) {
     console.error('Delete error', err);
     showToast('Error deleting transcription: ' + err.message, 'error');
     loadTranscriptions();
+  } finally {
+    setTimeout(() => inFlightDeletes.delete(targetId), 400);
   }
 }
 
