@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # MySQL 8.0 Relational Database
+  mysql:
+    image: mysql:8.0
+    container_name: procucev-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: procucev_transcription
+      MYSQL_USER: procucev_user
+      MYSQL_PASSWORD: procucev_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Spring Boot Backend Service
+  app:
+    build: .
+    container_name: procucev-app
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      DB_URL: jdbc:mysql://mysql:3306/procucev_transcription?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      DB_USERNAME: procucev_user
+      DB_PASSWORD: procucev_pass
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+
+volumes:
+  mysql_data:

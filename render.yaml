@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: procucev-transcription-service
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_URL
+        fromDatabase:
+          name: procucev-mysql
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+
+databases:
+  - name: procucev-mysql
+    plan: free
+    databaseName: procucev_transcription
+    user: procucev_user

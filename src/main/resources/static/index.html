@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Procucev AI - Real-time Multilingual Speech to Text Service</title>
+  <meta name="description" content="Production-grade Real-time Multilingual (Hindi + English / Hinglish) Speech-to-Text application built with Spring Boot, MySQL, WebSocket, and Web Audio API." />
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Ambient Background Matrix -->
+  <div class="ambient-grid"></div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="container header-inner">
+      <div class="logo-group">
+        <div class="logo-icon-wrapper">
+          <i class="fas fa-wave-square"></i>
+        </div>
+        <div class="logo-text">
+          <h1>Procucev VoiceAI</h1>
+          <p>Assignment 1 • Real-Time Multilingual STT</p>
+        </div>
+      </div>
+
+      <div class="header-status-pill">
+        <span class="status-dot"></span>
+        <span>MySQL Connected • Spring Boot Live</span>
+      </div>
+
+      <div class="header-actions">
+        <button id="openSettingsBtn" class="btn btn-secondary" title="Configure Gemini API Key">
+          <i class="fas fa-cog"></i> Settings
+        </button>
+        <a href="/api/transcriptions/export?format=csv" class="btn btn-secondary" title="Export All to CSV">
+          <i class="fas fa-download"></i> Export CSV
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="badge-pill">
+        <i class="fas fa-bolt"></i> Multilingual Speech-to-Text Engine (Hindi + English)
+      </div>
+      <h1 class="hero-title">
+        Real-Time Speech To Text <span class="gradient-text">Studio</span>
+      </h1>
+      <p class="hero-subtitle">
+        Speak naturally in Hindi, English, or mixed code-switching <strong style="color:#c4b5fd;">Hinglish</strong>. Transcribe live with sub-second latency, store in MySQL, and manage your full transcription history.
+      </p>
+    </section>
+
+    <!-- Studio Section -->
+    <section class="studio-container">
+      <!-- Engine Selector Tabs -->
+      <div class="engine-tabs">
+        <button class="engine-tab active" data-engine="live">
+          <i class="fas fa-broadcast-tower"></i> Live Streaming Multilingual (Hinglish)
+        </button>
+        <button class="engine-tab" data-engine="gemini">
+          <i class="fas fa-sparkles"></i> Gemini Live 3.1 AI Mode
+        </button>
+        <button class="engine-tab" data-engine="whisper">
+          <i class="fas fa-brain"></i> Whisper Engine Mode
+        </button>
+      </div>
+
+      <!-- Real-time Audio Waveform Canvas -->
+      <div class="visualizer-wrapper">
+        <span id="micStatusText" class="mic-status-label">
+          <i class="fas fa-microphone-slash"></i> Microphone Idle
+        </span>
+        <canvas id="waveCanvas"></canvas>
+      </div>
+
+      <!-- Live Recording Controls -->
+      <div class="controls-bar">
+        <button id="recordBtn" class="btn-record" title="Click to start/stop speaking">
+          <i class="fas fa-microphone"></i>
+        </button>
+        <button id="pauseBtn" class="btn btn-secondary" style="display: none;">
+          <i class="fas fa-pause"></i> Pause
+        </button>
+        <button id="stopSaveBtn" class="btn btn-primary" style="display: none;">
+          <i class="fas fa-save"></i> Save to DB
+        </button>
+        <button id="clearBtn" class="btn btn-secondary">
+          <i class="fas fa-trash-alt"></i> Clear
+        </button>
+        <button id="copyBtn" class="btn btn-secondary">
+          <i class="far fa-copy"></i> Copy
+        </button>
+        <button id="ttsBtn" class="btn btn-secondary">
+          <i class="fas fa-volume-up"></i> Listen (TTS)
+        </button>
+        <button id="refineBtn" class="btn btn-secondary" title="Punctuate and format with AI">
+          <i class="fas fa-magic"></i> Refine
+        </button>
+      </div>
+
+      <!-- Transcription Display Box -->
+      <div class="transcription-box">
+        <div class="transcription-box-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);">Live Output</span>
+            <span id="detectedLanguageBadge" class="detected-badge hinglish">Hinglish (Hindi + English)</span>
+          </div>
+          <div id="tokenTags" class="token-tags"></div>
+        </div>
+
+        <!-- Live Transcribed Text -->
+        <div class="live-output-content">
+          <span id="liveOutput"></span><span id="interimOutput" class="interim-text"></span><span class="cursor-blink"></span>
+        </div>
+
+        <!-- Audio Replay Player Preview (Recorded Mic) -->
+        <div id="audioPreviewWrapper" class="audio-player-wrapper">
+          <span style="font-size:12px;font-weight:600;color:var(--text-muted);"><i class="fas fa-headphones"></i> Mic Replay:</span>
+          <audio id="audioPreview" controls></audio>
+        </div>
+
+        <!-- Footer Stats Bar -->
+        <div class="transcription-box-footer">
+          <div class="stats-group">
+            <span class="stats-item"><i class="far fa-clock"></i> <strong id="timerDisplay">00:00:00</strong></span>
+            <span class="stats-item"><i class="fas fa-font"></i> <strong id="wordCountDisplay">0 words</strong></span>
+            <span class="stats-item"><i class="fas fa-language"></i> Real-time Phonetic Engine</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-dim);">
+            Press microphone button to begin • Automatic code-switching enabled
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Analytics & Stats Cards Ribbon -->
+    <section class="stats-grid">
+      <div class="stat-card icon-indigo">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Total Transcriptions</span>
+          <div class="stat-card-icon"><i class="fas fa-database"></i></div>
+        </div>
+        <div id="statTotal" class="stat-card-value">0</div>
+        <div class="stat-card-label">Stored in MySQL DB</div>
+      </div>
+
+      <div class="stat-card icon-emerald">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Words Transcribed</span>
+          <div class="stat-card-icon"><i class="fas fa-comment-dots"></i></div>
+        </div>
+        <div id="statWords" class="stat-card-value">0</div>
+        <div class="stat-card-label">Across all sessions</div>
+      </div>
+
+      <div class="stat-card icon-purple">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Multilingual Ratio</span>
+          <div class="stat-card-icon"><i class="fas fa-globe-asia"></i></div>
+        </div>
+        <div id="statHinglish" class="stat-card-value">0%</div>
+        <div class="stat-card-label">Hinglish / Code-switching</div>
+      </div>
+
+      <div class="stat-card icon-cyan">
+        <div class="stat-card-header">
+          <span class="stat-card-label">Speaking Time</span>
+          <div class="stat-card-icon"><i class="fas fa-stopwatch"></i></div>
+        </div>
+        <div id="statDuration" class="stat-card-value">0m 0s</div>
+        <div class="stat-card-label">Total voice audio logged</div>
+      </div>
+    </section>
+
+    <!-- History & CRUD Dashboard Section -->
+    <section class="dashboard-section">
+      <div class="dashboard-header">
+        <div class="dashboard-title-group">
+          <h2>Transcription History & Management</h2>
+          <p>Full CRUD operations with real-time filtering, TTS listening, search, and export</p>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;">
+          <a href="/api/transcriptions/export?format=json" class="btn btn-secondary">
+            <i class="fas fa-file-code"></i> Export JSON
+          </a>
+          <a href="/api/transcriptions/export?format=txt" class="btn btn-secondary">
+            <i class="fas fa-file-alt"></i> Export TXT
+          </a>
+        </div>
+      </div>
+
+      <!-- Filter & Search Toolbar -->
+      <div class="filter-bar">
+        <div class="search-input-wrapper">
+          <i class="fas fa-search"></i>
+          <input id="searchInput" type="text" class="search-input" placeholder="Search transcriptions by keyword or phrase..." />
+        </div>
+
+        <div class="filter-pills">
+          <button class="filter-pill active" data-filter="all">All Languages</button>
+          <button class="filter-pill" data-filter="Hinglish">Hinglish (Hindi + English)</button>
+          <button class="filter-pill" data-filter="English">English</button>
+          <button class="filter-pill" data-filter="Hindi">Hindi</button>
+        </div>
+      </div>
+
+      <!-- Bulk Selection Toolbar -->
+      <div id="bulkBar" class="bulk-bar">
+        <span id="selectedCountText" style="font-size:14px;font-weight:600;color:#c7d2fe;">0 transcriptions selected</span>
+        <button id="bulkDeleteBtn" class="btn btn-danger">
+          <i class="fas fa-trash-alt"></i> Delete Selected
+        </button>
+      </div>
+
+      <!-- Transcriptions Grid -->
+      <div id="transcriptionsGrid" class="transcriptions-grid">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Edit Transcription Modal -->
+  <div id="editModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Transcription</h3>
+        <button id="closeEditModal" class="btn btn-secondary btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editId" />
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input type="text" id="editTitle" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Transcribed Content</label>
+          <textarea id="editContent" class="form-control" rows="5"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Detected Language</label>
+          <select id="editLanguage" class="form-control">
+            <option value="Hinglish (Hindi + English)">Hinglish (Hindi + English)</option>
+            <option value="English">English</option>
+            <option value="Hindi">Hindi</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tags (comma separated)</label>
+          <input type="text" id="editTags" class="form-control" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
+        <button id="saveEditBtn" class="btn btn-primary"><i class="fas fa-check"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal (Gemini API Configuration) -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Settings & AI Configuration</h3>
+        <button id="closeSettingsModal" class="btn btn-secondary btn-icon"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Google Gemini API Key (Optional)</label>
+          <input type="password" id="geminiKeyInput" class="form-control" placeholder="AIzaSy..." />
+          <small style="color:var(--text-muted);display:block;margin-top:6px;">
+            Gemini Live 3.1 / Flash is used for enhanced multimodal transcription and AI refinement. The app works natively with real-time browser STT even without an external API key.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="saveSettingsBtn" class="btn btn-primary"><i class="fas fa-save"></i> Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toast Notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Client JavaScript -->
+  <script src="js/app.js"></script>
+</body>
+</html>
