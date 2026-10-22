@@ -8,12 +8,12 @@ COPY mvnw mvnw.cmd pom.xml ./
 COPY .mvn .mvn/
 RUN chmod +x ./mvnw
 
-# Pre-fetch dependencies
-RUN ./mvnw dependency:go-offline -B || true
+# Memory optimization for cloud build environments (Render, Railway, etc.)
+ENV MAVEN_OPTS="-Xmx384m -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
 
 # Copy source code and package
 COPY src ./src
-RUN ./mvnw clean package -DskipTests
+RUN ./mvnw clean package -DskipTests -B
 
 # Stage 2: Minimal Production Runtime
 FROM eclipse-temurin:21-jre-alpine
@@ -26,11 +26,11 @@ USER appuser
 # Copy built JAR from builder stage
 COPY --from=builder /app/target/transcription-service-1.0.0.jar app.jar
 
-# Expose port (default 8080)
-EXPOSE 8080
+# Expose port (overridden by cloud provider $PORT)
+EXPOSE 8080 10000
 
-# Environment variables with sensible defaults
-ENV PORT=8080
-ENV SPRING_PROFILES_ACTIVE=prod
+ENV JAVA_OPTS="-Xmx384m -Xms128m"
+ENV SPRING_PROFILES_ACTIVE=h2
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar"]
+
